@@ -1,0 +1,129 @@
+#importing libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from scipy.stats import zscore
+plt.rcParams['figure.figsize']=[15,8]
+
+
+pwd
+
+#loading dataset
+df=pd.read_csv('Iris.csv')
+
+df.head()
+
+DATA PREPROCESSING
+
+df.shape
+df.dtypes
+df.info()
+
+#checking null value
+df.isnull().sum()
+
+df.describe()
+
+df.describe(include='object')
+
+#checking outliers
+df.drop(['Id','Species'],axis=1).boxplot()
+
+THERE ARE NOT TOO MUCH OUTLIERS
+
+#number of categories in categorical variable
+df['Species'].value_counts()
+
+#observing number of categories in categorical variable
+round((df['Species'].value_counts()/len(df)*100),2)
+
+#countplot for each category of featire
+sns.countplot(df['Species'])
+
+#visualuse all the features using a pairplot
+i = sns.pairplot(df, vars = ['SepalLengthCm','SepalWidthCm','PetalLengthCm','PetalWidthCm'] ,hue='Species',palette='husl')
+plt.show()
+
+#preparing data for further processing
+df_iris = df.drop(['Id','Species'],axis=1)
+
+#displaying 5 records
+df_iris.head()
+
+#scaling the data
+df_scaled = df_iris.apply(zscore)
+df_scaled.head()
+
+#find optimal k value
+cluster_range=range(1,11)
+cluster_errors=[]
+for num_clusters in cluster_range:
+    clusters=KMeans(num_clusters,n_init=10)
+    clusters.fit(df_scaled)
+    labels=clusters.labels_
+    centroids = clusters.cluster_centers_
+    cluster_errors.append(cluster.inertia_)
+clusters_df = pd.DataFrame({"num_clusters": cluster_range,"cluster_errors":cluster_errors})
+clusters_df[0:15]  
+
+#plotting elbow graph
+plt.plot(clusters_df.num_clusters,clusters_df.cluster_errors,marker="o",color='black')
+
+BY OBSERVING CLUSTERS ERRORS DATAFRAME AND ELBOW CURVE WE CHOOSE NUMBER OF CLUSTERS AS 3
+
+
+#builing kmeans with 3 clusters
+kmeans=KMeans(n_clusters=3,n_init=15 ,random_state=10)
+kmeans.fit(df_scaled)
+
+#centroids for all clusters
+centroids=kmeans.cluster_centers_
+centroid_df=pd.DataFrame(centroids,columns=list(df_scaled))
+centroid_df
+
+#Original Clusters and Predicted Clusters
+print('Original Clusters :\n')
+print(df['Species'].value_counts())
+
+print('\n\n Predicted Clusters : ')
+print(df_new['labels'].value_counts())
+
+#visualization for x='SepalLenghthCm' vs y='SepalWidthCm'
+fig, (ax1,ax2)=plt.subplots(1,2)
+
+ax1=plt.subplot(1,2,1)
+plt.title('Original Classes')
+sns.scatterplot(x='SepalLengthCm' ,y='SepalWidthCm',hue='Species',style='Species' ,data=df,ax=ax1)
+
+ax2=plt.subplot(1,2,2)
+plt.title('Predicted Classes')
+sns.scatterplot(x='SepalLengthCm' ,y='SepalWidthCm',hue='labels',style='labels',data=df_new,ax=ax2)
+plt.show()
+
+#visualization for x='PetalLengthCm' vs y='PetalWidthCm'
+fig, (ax1,ax2) = plt.subplots(1,2)
+
+ax1=plt.subplot(1,2,1)
+plt.title('Original Classes')
+sns.scatterplot(x='PetalLengthCm',y='PetalWidthCm',hue='Species',style='Species',data=df, ax=ax1)
+
+ax2=plt.subplot(1,2,2)
+plt.title('predicted Classes')
+sns.scatterplot(x='PetalLengthCm',y='PetalWidthCm',hue='labels',style='labels',data=df_new, ax=ax2)
+
+3D Representation
+X=df.iloc[:,[0,1,2,3]].values
+kmeans=KMeans(n_clusters=3,n_init=10,random_state=10)
+y_kmeans=kmeans.fit_predict(X)
+
+fig=plt.figure(figsize=(12,12))
+ax=fig.add_subplot(111,projection='3d')
+plt.scatter(X[y_kmeans == 0,0],X[y_kmeans == 0,1],s=50,c='purple',label='Iris-setosa')
+plt.scatter(X[y_kmeans == 1,0],X[y_kmeans == 1,1],s=50,c='orange',label='Iris-versicolor')
+plt.scatter(X[y_kmeans == 2,0],X[y_kmeans == 2,1],s=50,c='black',label='Iris-virginica')
+plt.scatter(kmeans.cluster_centers_[:,0],kmeans.cluster_centers_[:,1],s=100,c='black', label='Centroids')
+
+plt.legend()
+plt.show()
